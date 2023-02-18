@@ -3,7 +3,6 @@
 // Create temporary AWS credentials using SAML provider.
 
 const querystring = require('querystring');
-
 const { browserLogin } = require('./utils/browser');
 const { getSAMLRoles } = require('./utils/saml');
 const { getSTSToken } = require('./utils/sts');
@@ -11,7 +10,8 @@ const { CONFIG_FILE, saveCredentials } = require('./utils/config');
 
 const { IDP_URL, AWS_PROFILE } = process.env;
 
-const AWS_SIGNIN_URL = 'https://signin.aws.amazon.com/saml';
+const REG_AWS_SIGNIN_URL =
+    /^https:\/\/([^\.]+\.)?signin\.aws\.amazon\.com\/saml/;
 
 function checkUsage() {
     if (!IDP_URL) throw new Error('IDP_URL not set!');
@@ -20,6 +20,17 @@ function checkUsage() {
 
 function base64decode(data) {
     return Buffer.from(data, 'base64').toString('utf8');
+}
+
+function simplifyURL(str) {
+    const url = new URL(str);
+    return `${url.origin}${url.pathname}`;
+}
+
+function isAWSSigninRequest(request) {
+    const method = request.method();
+    const url = request.url();
+    return method === 'POST' && REG_AWS_SIGNIN_URL.test(simplifyURL(url));
 }
 
 function processSAMLResponse(samlResponse, selectedRole) {
@@ -34,9 +45,7 @@ function processSAMLResponse(samlResponse, selectedRole) {
 }
 
 function handleRequest(request) {
-    const isAWSSigninRequest =
-        request.method() === 'POST' && request.url() === AWS_SIGNIN_URL;
-    if (isAWSSigninRequest) {
+    if (isAWSSigninRequest(request)) {
         const payload = request.postData();
         const parsed = querystring.parse(payload);
         const { SAMLResponse, roleIndex } = parsed;
