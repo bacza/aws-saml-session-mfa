@@ -1,6 +1,6 @@
 # aws-saml-session-mfa
 
-Create temporary AWS credentials using SAML provider.
+Create temporary AWS credentials using SAML-based identity provider.
 
 This is an evolution of [aws-saml-session](https://www.npmjs.com/package/aws-saml-session) package which adds support for multi-factor authentication (MFA) flows.
 

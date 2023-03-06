@@ -1,74 +1,38 @@
 #!/usr/bin/env node
 
-// Create temporary AWS credentials using SAML provider.
+/**
+ * Create temporary AWS credentials using SAML-based identity provider.
+ */
 
-const querystring = require('querystring');
-const { browserLogin } = require('./utils/browser');
-const { getSAMLRoles } = require('./utils/saml');
-const { getSTSToken } = require('./utils/sts');
-const { CONFIG_FILE, saveCredentials } = require('./utils/config');
+const { AWSLoginHandler } = require('./lib/web/AWSLoginHandler');
+const { browserLogin } = require('./lib/utils/browser');
+const { getSTSToken } = require('./lib/utils/sts');
+const { CONFIG_FILE, saveCredentials } = require('./lib/utils/config');
 
-const { IDP_URL, AWS_PROFILE } = process.env;
-
-const REG_AWS_SIGNIN_URL =
-    /^https:\/\/([^\.]+\.)?signin\.aws\.amazon\.com\/saml/;
+const { AWS_PROFILE, IDP_URL } = process.env;
 
 function checkUsage() {
-    if (!IDP_URL) throw new Error('IDP_URL not set!');
     if (!AWS_PROFILE) throw new Error('AWS_PROFILE not set!');
-}
-
-function base64decode(data) {
-    return Buffer.from(data, 'base64').toString('utf8');
-}
-
-function simplifyURL(str) {
-    const url = new URL(str);
-    return `${url.origin}${url.pathname}`;
-}
-
-function isAWSSigninRequest(request) {
-    const method = request.method();
-    const url = request.url();
-    return method === 'POST' && REG_AWS_SIGNIN_URL.test(simplifyURL(url));
-}
-
-function processSAMLResponse(samlResponse, selectedRole) {
-    const roles = getSAMLRoles(base64decode(samlResponse));
-    const role =
-        roles.length === 1
-            ? roles[0]
-            : roles.find((item) => item.role === selectedRole);
-    if (role) {
-        return { success: true, samlResponse, roles, role };
-    }
-}
-
-function handleRequest(request) {
-    if (isAWSSigninRequest(request)) {
-        const payload = request.postData();
-        const parsed = querystring.parse(payload);
-        const { SAMLResponse, roleIndex } = parsed;
-        return processSAMLResponse(SAMLResponse, roleIndex);
-    }
+    if (!IDP_URL) throw new Error('IDP_URL not set!');
 }
 
 async function main() {
     try {
         checkUsage();
 
-        console.log('Opening browser...');
-        const result = await browserLogin(IDP_URL, handleRequest);
+        console.log('INFO: Opening browser...');
+        const handler = new AWSLoginHandler();
+        const result = await browserLogin(IDP_URL, handler);
         const { success, samlResponse, role } = result;
 
         if (!success) throw new Error('SAML_PROCESSING_ERROR');
 
-        console.log('SAML response received.');
+        console.log('INFO: SAML response received.');
 
-        console.log(`Assuming role: ${role.role}...`);
+        console.log('INFO: Assuming role:', role.role);
         const sts = await getSTSToken(role.provider, role.role, samlResponse);
 
-        console.log(`Saving AWS credentials: ${AWS_PROFILE}...`);
+        console.log('INFO: Saving AWS credentials:', AWS_PROFILE);
         saveCredentials(CONFIG_FILE, AWS_PROFILE, sts);
 
         console.log('DONE.');
