@@ -4,13 +4,13 @@
  * Create temporary AWS credentials using SAML-based identity provider.
  */
 
-const { browserLogin } = require('./lib/web/browser');
-const { getSTSToken } = require('./lib/utils/sts');
-const { CONFIG_FILE, saveCredentials } = require('./lib/utils/config');
-const { MainHandler } = require('./lib/web/MainHandler');
-const { AWSHandler } = require('./lib/web/AWSHandler');
-const { AADHandler } = require('./lib/web/AADHandler');
-const { ADFSHandler } = require('./lib/web/ADFSHandler');
+const { browserLogin } = require('./src/web/browser');
+const { getSTSToken } = require('./src/utils/sts');
+const { CONFIG_FILE, saveCredentials } = require('./src/utils/config');
+const { MainHandler } = require('./src/web/MainHandler');
+const { AWSHandler } = require('./src/web/AWSHandler');
+const { AADHandler } = require('./src/web/AADHandler');
+const { ADFSHandler } = require('./src/web/ADFSHandler');
 
 const { AWS_PROFILE, IDP_URL } = process.env;
 
