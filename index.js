@@ -4,10 +4,13 @@
  * Create temporary AWS credentials using SAML-based identity provider.
  */
 
-const { AWSLoginHandler } = require('./lib/web/AWSLoginHandler');
-const { browserLogin } = require('./lib/utils/browser');
+const { browserLogin } = require('./lib/web/browser');
 const { getSTSToken } = require('./lib/utils/sts');
 const { CONFIG_FILE, saveCredentials } = require('./lib/utils/config');
+const { MainHandler } = require('./lib/web/MainHandler');
+const { AWSHandler } = require('./lib/web/AWSHandler');
+const { AADHandler } = require('./lib/web/AADHandler');
+const { ADFSHandler } = require('./lib/web/ADFSHandler');
 
 const { AWS_PROFILE, IDP_URL } = process.env;
 
@@ -20,22 +23,25 @@ async function main() {
     try {
         checkUsage();
 
-        console.log('INFO: Opening browser...');
-        const handler = new AWSLoginHandler();
-        const result = await browserLogin(IDP_URL, handler);
+        console.log('MAIN: Opening web browser...');
+        const awsHandler = new AWSHandler();
+        const idpHandlers = [new AADHandler(), new ADFSHandler()];
+        const mainHandler = new MainHandler(awsHandler, idpHandlers);
+
+        const result = await browserLogin(IDP_URL, mainHandler);
         const { success, samlResponse, role } = result;
 
         if (!success) throw new Error('SAML_PROCESSING_ERROR');
 
-        console.log('INFO: SAML response received.');
+        console.log('MAIN: SAML response received.');
 
-        console.log('INFO: Assuming role:', role.role);
+        console.log('MAIN: Assuming role:', role.role);
         const sts = await getSTSToken(role.provider, role.role, samlResponse);
 
-        console.log('INFO: Saving AWS credentials:', AWS_PROFILE);
+        console.log('MAIN: Saving AWS credentials:', AWS_PROFILE);
         saveCredentials(CONFIG_FILE, AWS_PROFILE, sts);
 
-        console.log('DONE.');
+        console.log('MAIN: Done.');
         process.exit(0);
     } catch (error) {
         console.log('ERROR:', error.message);
