@@ -4,6 +4,9 @@
  * Create temporary AWS credentials using SAML-based identity provider.
  */
 
+require('dotenv').config();
+const { getOpts, checkOpts, help } = require('./src/utils/cli');
+const { UsageError } = require('./src/utils/errors');
 const { browserLogin } = require('./src/web/browser');
 const { getSTSToken } = require('./src/utils/sts');
 const { CONFIG_FILE, saveCredentials } = require('./src/utils/config');
@@ -12,23 +15,23 @@ const { AWSHandler } = require('./src/web/AWSHandler');
 const { AADHandler } = require('./src/web/AADHandler');
 const { ADFSHandler } = require('./src/web/ADFSHandler');
 
-const { AWS_PROFILE, IDP_URL } = process.env;
-
-function checkUsage() {
-    if (!AWS_PROFILE) throw new Error('AWS_PROFILE not set!');
-    if (!IDP_URL) throw new Error('IDP_URL not set!');
-}
-
 async function main() {
     try {
-        checkUsage();
+        const opts = getOpts();
+
+        if (opts.help) {
+            help();
+            return;
+        }
+
+        checkOpts(opts);
 
         console.log('MAIN: Opening web browser...');
-        const awsHandler = new AWSHandler();
-        const idpHandlers = [new AADHandler(), new ADFSHandler()];
+        const awsHandler = new AWSHandler(opts);
+        const idpHandlers = [new AADHandler(opts), new ADFSHandler(opts)];
         const mainHandler = new MainHandler(awsHandler, idpHandlers);
 
-        const result = await browserLogin(IDP_URL, mainHandler);
+        const result = await browserLogin(opts.url, mainHandler, opts.gui);
         const { success, samlResponse, role } = result;
 
         if (!success) throw new Error('SAML_PROCESSING_ERROR');
@@ -36,17 +39,22 @@ async function main() {
         console.log('MAIN: SAML response received.');
 
         console.log('MAIN: Assuming role:', role.role);
-        const sts = await getSTSToken(role.provider, role.role, samlResponse);
+        const sts = await getSTSToken(
+            role.provider,
+            role.role,
+            samlResponse,
+            opts.duration
+        );
 
-        console.log('MAIN: Saving AWS credentials:', AWS_PROFILE);
-        saveCredentials(CONFIG_FILE, AWS_PROFILE, sts);
+        console.log('MAIN: Saving AWS credentials:', opts.profile);
+        saveCredentials(CONFIG_FILE, opts.profile, sts);
 
         console.log('MAIN: Done.');
-        process.exit(0);
     } catch (error) {
-        console.log('ERROR:', error.message);
+        console.log('\nERROR:', error.message);
+        if (error instanceof UsageError) help();
         process.exit(1);
     }
 }
 
-main();
+if (require.main === module) main();

@@ -4,12 +4,16 @@ const { HTTPRequest, Page } = require('puppeteer');
 const { ProviderHandler } = require('./ProviderHandler');
 const { sleep } = require('../utils/misc');
 
-const { IDP_USER, IDP_PASS } = process.env;
-
 /**
  * Active Directory Federation Services (ADFS) provider handler.
  */
 class ADFSHandler extends ProviderHandler {
+    constructor({ user, pass } = {}) {
+        super();
+        this.user = user;
+        this.pass = pass;
+    }
+
     /**
      * @returns {string} provider name
      */
@@ -44,14 +48,14 @@ class ADFSHandler extends ProviderHandler {
      * @private
      */
     async installUserFiller(page) {
-        if (IDP_USER == null) return false;
+        if (this.user == null) return false;
         const XPATH_INPUT = '//*[@id="userNameInput"]';
         return Promise.resolve()
             .then(() => sleep(2000))
             .then(() => page.waitForXPath(XPATH_INPUT))
             .then((result) => {
                 console.log('IDP: Autofill: entering username...');
-                return result.type(IDP_USER);
+                return result.type(this.user);
             })
             .then(() => true);
     }
@@ -61,7 +65,7 @@ class ADFSHandler extends ProviderHandler {
      * @private
      */
     async installPassFiller(page) {
-        if (IDP_PASS == null) return false;
+        if (this.pass == null) return false;
         const XPATH_INPUT = '//*[@id="passwordInput"]';
         const XPATH_BUTTON = '//*[@id="submitButton"]';
         return Promise.resolve()
@@ -69,7 +73,7 @@ class ADFSHandler extends ProviderHandler {
             .then(() => page.waitForXPath(XPATH_INPUT))
             .then((result) => {
                 console.log('IDP: Autofill: entering password...');
-                return result.type(IDP_PASS);
+                return result.type(this.pass);
             })
             .then(() => sleep(500))
             .then(() => page.waitForXPath(XPATH_BUTTON))

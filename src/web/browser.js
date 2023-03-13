@@ -12,12 +12,13 @@ const isTopLevelNavigation = (request) => {
 /**
  * @param {string} url
  * @param {WebHandler} handler
+ * @param {boolean} gui
  * @returns {Promise<any>}
  */
-async function browserLogin(url, handler) {
+async function browserLogin(url, handler, gui = true) {
     return new Promise(async (resolve, reject) => {
         const browser = await puppeteer.launch({
-            headless: false,
+            headless: !gui,
             defaultViewport: null,
             waitForInitialPage: true,
         });
@@ -68,7 +69,7 @@ async function browserLogin(url, handler) {
 
         await handler.onPageInit(page).catch(doReject);
 
-        page.goto(url);
+        page.goto(url).catch(doReject);
     });
 }
 

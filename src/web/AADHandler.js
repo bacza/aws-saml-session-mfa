@@ -5,12 +5,17 @@ const { ProviderHandler } = require('./ProviderHandler');
 const { sleep } = require('../utils/misc');
 const { generateCode } = require('../utils/totp');
 
-const { IDP_USER, IDP_PASS, IDP_TOTP_SECRET } = process.env;
-
 /**
  * Azure Active Directory (AAD) provider handler.
  */
 class AADHandler extends ProviderHandler {
+    constructor({ user, pass, totp } = {}) {
+        super();
+        this.user = user;
+        this.pass = pass;
+        this.totp = totp;
+    }
+
     /**
      * @returns {string} provider name
      */
@@ -50,7 +55,7 @@ class AADHandler extends ProviderHandler {
      * @private
      */
     async installUserFiller(page) {
-        if (IDP_USER == null) return false;
+        if (this.user == null) return false;
         const XPATH_INPUT = '//*[@id="i0116"]';
         const XPATH_BUTTON = '//*[@id="idSIButton9"]';
         return Promise.resolve()
@@ -58,7 +63,7 @@ class AADHandler extends ProviderHandler {
             .then(() => page.waitForXPath(XPATH_INPUT))
             .then((result) => {
                 console.log('IDP: Autofill: entering username...');
-                return result.type(IDP_USER);
+                return result.type(this.user);
             })
             .then(() => sleep(500))
             .then(() => page.waitForXPath(XPATH_BUTTON))
@@ -71,7 +76,7 @@ class AADHandler extends ProviderHandler {
      * @private
      */
     async installPassFiller(page) {
-        if (IDP_PASS == null) return false;
+        if (this.pass == null) return false;
         const XPATH_INPUT = '//*[@id="i0118"]';
         const XPATH_BUTTON = '//*[@id="idSIButton9"]';
         return Promise.resolve()
@@ -79,7 +84,7 @@ class AADHandler extends ProviderHandler {
             .then(() => page.waitForXPath(XPATH_INPUT))
             .then((result) => {
                 console.log('IDP: Autofill: entering password...');
-                return result.type(IDP_PASS);
+                return result.type(this.pass);
             })
             .then(() => sleep(500))
             .then(() => page.waitForXPath(XPATH_BUTTON))
@@ -92,14 +97,14 @@ class AADHandler extends ProviderHandler {
      * @private
      */
     async installCodeFiller(page) {
-        if (IDP_TOTP_SECRET == null) return false;
+        if (this.totp == null) return false;
         const XPATH_INPUT = '//*[@id="idTxtBx_SAOTCC_OTC"]';
         const XPATH_BUTTON = '//*[@id="idSubmit_SAOTCC_Continue"]';
         return Promise.resolve()
             .then(() => sleep(2000))
             .then(() => page.waitForXPath(XPATH_INPUT))
             .then((result) =>
-                generateCode(IDP_TOTP_SECRET).then((code) => {
+                generateCode(this.totp).then((code) => {
                     console.log('IDP: Autofill: entering OTP code...');
                     return result.type(code);
                 })

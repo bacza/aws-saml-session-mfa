@@ -8,7 +8,7 @@ const DURATION = 3600;
 async function getSTSToken(principal, role, assertion, duration = null) {
     return new Promise((resolve, reject) => {
         const params = {
-            DurationSeconds: duration || DURATION,
+            DurationSeconds: +duration || DURATION,
             PrincipalArn: principal,
             RoleArn: role,
             SAMLAssertion: assertion,

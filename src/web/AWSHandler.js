@@ -6,8 +6,6 @@ const { getSAMLRoles } = require('../utils/saml');
 const { WebHandler } = require('./WebHandler');
 const { base64decode, simplifyURL } = require('./webutils');
 
-const { AWS_ROLE } = process.env;
-
 const REG_AWS_SIGNIN_URL =
     /^https:\/\/([^\.]+\.)?signin\.aws\.amazon\.com\/saml/;
 
@@ -15,6 +13,11 @@ const REG_AWS_SIGNIN_URL =
  * AWS login handler.
  */
 class AWSHandler extends WebHandler {
+    constructor({ role } = {}) {
+        super();
+        this.role = role;
+    }
+
     /**
      * @param {HTTPRequest} request
      * @returns {boolean}
@@ -52,7 +55,7 @@ class AWSHandler extends WebHandler {
             const payload = request.postData();
             const parsed = querystring.parse(payload);
             const { SAMLResponse, roleIndex } = parsed;
-            const selectedRole = roleIndex || AWS_ROLE;
+            const selectedRole = roleIndex || this.role;
             return this.processSAMLResponse(SAMLResponse, selectedRole);
         }
     }
