@@ -5,7 +5,7 @@
  */
 
 require('dotenv').config();
-const { getOpts, checkOpts, help } = require('./src/utils/cli');
+const { META, getOpts, validateOpts, help } = require('./src/utils/cli');
 const { UsageError } = require('./src/utils/errors');
 const { browserLogin } = require('./src/web/browser');
 const { getSTSToken } = require('./src/utils/sts');
@@ -17,14 +17,18 @@ const { ADFSHandler } = require('./src/web/ADFSHandler');
 
 async function main() {
     try {
-        const opts = getOpts();
+        console.log(
+            'MAIN: Starting %s v%s...',
+            String(META.name).toUpperCase(),
+            META.version
+        );
 
+        const opts = getOpts();
         if (opts.help) {
             help();
             return;
         }
-
-        checkOpts(opts);
+        validateOpts(opts);
 
         console.log('MAIN: Opening web browser...');
         const awsHandler = new AWSHandler(opts);
@@ -52,7 +56,8 @@ async function main() {
         console.log('MAIN: Done.');
     } catch (error) {
         console.log('\nERROR:', error.message);
-        if (error instanceof UsageError) help();
+        if (error instanceof UsageError)
+            console.log('\nMAIN: Try --help for help.');
         process.exit(1);
     }
 }
