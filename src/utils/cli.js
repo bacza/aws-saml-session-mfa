@@ -101,20 +101,20 @@ USAGE: ${META.name} [OPTIONS]
 Where OPTIONS are:
   --help                        Prints this help message.
   --gui                         Enables GUI mode. Web browser is visible in this mode. (this is the default)
-  --no-gui                      Disables GUI mode. Web browser is hidden.
-  --profile <name>              (required) AWS credentials profile name to use.
+  --no-gui                      Disables GUI mode. Web browser is hidden in this mode.
+  --profile <name>              (REQUIRED) AWS credentials profile name to use.
                                 Can be set by AWS_PROFILE environment variable.
   --role <name>                 AWS role name to choose at the final login step. (if multiple are available)
                                 Can be set by AWS_ROLE environment variable.
-  --url <url>                   (required) Identity Provider (IdP) login URL.
+  --url <url>                   (REQUIRED) Identity provider login URL.
                                 Can be set by IDP_URL environment variable.
-  --user <user>                 IdP username.
+  --user <user>                 Identity provider username.
                                 Can be set by IDP_USER environment variable.
-  --pass <pass>                 IdP password.
+  --pass <pass>                 Identity provider password.
                                 Can be set by IDP_PASS environment variable.
-  --secret <secret>             IdP Time-based One Time Password (TOTP) secret.
+  --secret <secret>             Identity provider Time-based One Time Password (TOTP) secret.
                                 Can be set by IDP_TOTP environment variable.
-  --duration <value><unit>      Validity duration for the generated session token. Units: s, m, h.
+  --duration <value><unit>      Validity duration for the generated credentials. Units: s, m, h. (default is 1h)
                                 Can be set by AWS_DURATION environment variable.
 `);
 }

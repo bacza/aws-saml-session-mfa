@@ -105,7 +105,7 @@ class AADHandler extends ProviderHandler {
             .then(() => page.waitForXPath(XPATH_INPUT))
             .then((result) =>
                 generateCode(this.totp).then((code) => {
-                    console.log('IDP: Autofill: entering OTP code...');
+                    console.log('IDP: Autofill: entering TOTP code...');
                     return result.type(code);
                 })
             )
