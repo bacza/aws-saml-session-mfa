@@ -142,13 +142,13 @@ The utility is using a web browser automation library [Puppeteer](https://pptr.d
 Then it intercepts the SAML response from identity provider and creates AWS short-term credentials by calling AWS STS service to assume selected IAM role.
 Finally it updates the standard AWS credentials file with the newly obtained credentials, so it can be used by any CLI tool or AWS SDK.
 
-Regarding user authentication with identity provider - there are two modes of operation: `interactive` and `automated`.
+Regarding the user authentication process - there are two modes of operation: `interactive` and `automated`.
 
 For `interactive` mode there is nothing special implemented, the user is required to enter all the credentials manually in order to authenticate.
 
-For `automated` mode there is an `autofill` functionality which tries to fill in the required credentials for the user automatically. There are specific autofill _handlers_ per identity provider as the login page differs for each. The handler is required to recognize the login page of the provider it supports, and then to interact with it to complete the authentication process. It's just _typing_ into fields and _clicking_ the buttons. ;)
+For `automated` mode there is an `autofill` functionality which tries to fill in the required credentials for the user automatically. There are specific autofill _handlers_ per identity provider as the login page differs for each. The handler is required to recognize the login page of the provider it supports, and then to interact with it to complete the authentication process. It's just automated _typing_ into fields and _clicking_ on the buttons. ;)
 
-If the autofill handler is able to enter all the required information, then the utility can be run in headless mode - without even displaying the web browser (enabled by `--no-gui` CLI option). Otherwise the user will still need to enter the missing information, thus making it a `semi-automated` mode.
+If the autofill handler is able to enter all the required information, the utility can be run in fully automated headless mode - without even displaying the web browser GUI (which is enabled by `--no-gui` CLI option). Otherwise the user will still need to enter the missing information, thus making it a `semi-automated` mode (in this case `--no-gui` option should be skipped).
 
 ## Bugs and contribution
 
