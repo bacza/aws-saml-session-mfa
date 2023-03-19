@@ -120,7 +120,7 @@ Example script output for fully automated headless mode run:
 aws-saml-session-mfa --no-gui
 
 MAIN: Starting AWS-SAML-SESSION-MFA v1.1.0...
-MAIN: Opening web browser...
+MAIN: Starting web browser... (headless mode)
 IDP: Identity Provider detected: Azure Active Directory (AAD)
 WEB: Page loaded: Redirecting
 WEB: Page loaded: Sign in to your account
@@ -129,8 +129,8 @@ IDP: Autofill: entering password...
 WEB: Page loaded: Sign in to your account
 IDP: Autofill: entering TOTP code...
 MAIN: SAML response received.
-MAIN: Assuming role: arn:aws:iam::***:role/***-Developer
-MAIN: Saving AWS credentials: dev
+MAIN: Assuming IAM role: arn:aws:iam::***:role/***-Developer
+MAIN: Saving AWS credentials profile: dev
 MAIN: Done.
 ```
 
