@@ -30,7 +30,11 @@ async function main() {
         }
         validateOpts(opts);
 
-        console.log('MAIN: Opening web browser...');
+        console.log(
+            'MAIN: Starting web browser...',
+            opts.gui ? '' : '(headless mode)'
+        );
+
         const awsHandler = new AWSHandler(opts);
         const idpHandlers = [new AADHandler(opts), new ADFSHandler(opts)];
         const mainHandler = new MainHandler(awsHandler, idpHandlers);
@@ -42,7 +46,7 @@ async function main() {
 
         console.log('MAIN: SAML response received.');
 
-        console.log('MAIN: Assuming role:', role.role);
+        console.log('MAIN: Assuming IAM role:', role.role);
         const sts = await getSTSToken(
             role.provider,
             role.role,
@@ -50,7 +54,7 @@ async function main() {
             opts.duration
         );
 
-        console.log('MAIN: Saving AWS credentials:', opts.profile);
+        console.log('MAIN: Saving AWS credentials profile:', opts.profile);
         saveCredentials(CONFIG_FILE, opts.profile, sts);
 
         console.log('MAIN: Done.');
