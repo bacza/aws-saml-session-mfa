@@ -1,82 +1,69 @@
 #!/usr/bin/env node
 
-// Create temporary AWS credentials using SAML provider.
+/**
+ * Create temporary AWS credentials using SAML-based identity provider.
+ */
 
-const querystring = require('querystring');
-const { browserLogin } = require('./utils/browser');
-const { getSAMLRoles } = require('./utils/saml');
-const { getSTSToken } = require('./utils/sts');
-const { CONFIG_FILE, saveCredentials } = require('./utils/config');
-
-const { IDP_URL, AWS_PROFILE } = process.env;
-
-const REG_AWS_SIGNIN_URL =
-    /^https:\/\/([^\.]+\.)?signin\.aws\.amazon\.com\/saml/;
-
-function checkUsage() {
-    if (!IDP_URL) throw new Error('IDP_URL not set!');
-    if (!AWS_PROFILE) throw new Error('AWS_PROFILE not set!');
-}
-
-function base64decode(data) {
-    return Buffer.from(data, 'base64').toString('utf8');
-}
-
-function simplifyURL(str) {
-    const url = new URL(str);
-    return `${url.origin}${url.pathname}`;
-}
-
-function isAWSSigninRequest(request) {
-    const method = request.method();
-    const url = request.url();
-    return method === 'POST' && REG_AWS_SIGNIN_URL.test(simplifyURL(url));
-}
-
-function processSAMLResponse(samlResponse, selectedRole) {
-    const roles = getSAMLRoles(base64decode(samlResponse));
-    const role =
-        roles.length === 1
-            ? roles[0]
-            : roles.find((item) => item.role === selectedRole);
-    if (role) {
-        return { success: true, samlResponse, roles, role };
-    }
-}
-
-function handleRequest(request) {
-    if (isAWSSigninRequest(request)) {
-        const payload = request.postData();
-        const parsed = querystring.parse(payload);
-        const { SAMLResponse, roleIndex } = parsed;
-        return processSAMLResponse(SAMLResponse, roleIndex);
-    }
-}
+require('dotenv').config();
+const { META, getOpts, validateOpts, help } = require('./src/utils/cli');
+const { UsageError } = require('./src/utils/errors');
+const { browserLogin } = require('./src/web/browser');
+const { getSTSToken } = require('./src/utils/sts');
+const { CONFIG_FILE, saveCredentials } = require('./src/utils/config');
+const { MainHandler } = require('./src/web/MainHandler');
+const { AWSHandler } = require('./src/web/AWSHandler');
+const { AADHandler } = require('./src/web/AADHandler');
+const { ADFSHandler } = require('./src/web/ADFSHandler');
 
 async function main() {
     try {
-        checkUsage();
+        console.log(
+            'MAIN: Starting %s v%s...',
+            String(META.name).toUpperCase(),
+            META.version
+        );
 
-        console.log('Opening browser...');
-        const result = await browserLogin(IDP_URL, handleRequest);
+        const opts = getOpts();
+        if (opts.help) {
+            help();
+            return;
+        }
+        validateOpts(opts);
+
+        console.log(
+            'MAIN: Starting web browser...',
+            opts.gui ? '' : '(headless mode)'
+        );
+
+        const awsHandler = new AWSHandler(opts);
+        const idpHandlers = [new AADHandler(opts), new ADFSHandler(opts)];
+        const mainHandler = new MainHandler(awsHandler, idpHandlers);
+
+        const result = await browserLogin(opts.url, mainHandler, opts.gui);
         const { success, samlResponse, role } = result;
 
         if (!success) throw new Error('SAML_PROCESSING_ERROR');
 
-        console.log('SAML response received.');
+        console.log('MAIN: SAML response received.');
 
-        console.log(`Assuming role: ${role.role}...`);
-        const sts = await getSTSToken(role.provider, role.role, samlResponse);
+        console.log('MAIN: Assuming IAM role:', role.role);
+        const sts = await getSTSToken(
+            role.provider,
+            role.role,
+            samlResponse,
+            opts.duration
+        );
 
-        console.log(`Saving AWS credentials: ${AWS_PROFILE}...`);
-        saveCredentials(CONFIG_FILE, AWS_PROFILE, sts);
+        console.log('MAIN: Saving AWS credentials profile:', opts.profile);
+        saveCredentials(CONFIG_FILE, opts.profile, sts);
 
-        console.log('DONE.');
-        process.exit(0);
+        console.log('MAIN: Done.');
     } catch (error) {
-        console.log('ERROR:', error.message);
+        console.log('\nERROR:', error.message);
+        if (error instanceof UsageError)
+            console.log('\nMAIN: Try --help for help.');
         process.exit(1);
     }
 }
 
-main();
+if (require.main === module) main();
