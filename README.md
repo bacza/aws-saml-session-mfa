@@ -122,11 +122,11 @@ aws-saml-session-mfa --no-gui
 MAIN: Starting AWS-SAML-SESSION-MFA v1.1.0...
 MAIN: Starting web browser... (headless mode)
 IDP: Identity Provider detected: Azure Active Directory (AAD)
-WEB: Page loaded: Redirecting
-WEB: Page loaded: Sign in to your account
+WEB: Page loaded: 'Redirecting'
+WEB: Page loaded: 'Sign in to your account'
 IDP: Autofill: entering username...
 IDP: Autofill: entering password...
-WEB: Page loaded: Sign in to your account
+WEB: Page loaded: 'Sign in to your account'
 IDP: Autofill: entering TOTP code...
 MAIN: SAML response received.
 MAIN: Assuming IAM role: arn:aws:iam::***:role/***-Developer
