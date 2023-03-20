@@ -4,6 +4,9 @@ const { HTTPRequest, Page } = require('puppeteer');
 const { ProviderHandler } = require('./ProviderHandler');
 const { sleep } = require('../utils/misc');
 
+const REGEX_PATH = /\/adfs\/ls\/idpinitiatedsignon.aspx/i;
+const REGEX_PARAM = /urn:amazon:webservices/i;
+
 /**
  * Active Directory Federation Services (ADFS) provider handler.
  */
@@ -28,9 +31,10 @@ class ADFSHandler extends ProviderHandler {
      */
     async checkRequest(page, request) {
         const url = new URL(request.url());
-        if (url.pathname !== '/adfs/ls/idpinitiatedsignon.aspx') return;
-        const param = url.searchParams.get('loginToRp');
-        return param === 'urn:amazon:webservices';
+        return (
+            REGEX_PATH.test(url.pathname) &&
+            REGEX_PARAM.test(url.searchParams.get('loginToRp'))
+        );
     }
 
     /**
