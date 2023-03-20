@@ -37,10 +37,9 @@ class ADFSHandler extends ProviderHandler {
      * @param {Page} page
      */
     async onPageInit(page) {
-        Promise.resolve(true)
+        return Promise.resolve(true)
             .then((cont) => cont && this.installUserFiller(page))
-            .then((cont) => cont && this.installPassFiller(page))
-            .catch(console.log);
+            .then((cont) => cont && this.installPassFiller(page));
     }
 
     /**

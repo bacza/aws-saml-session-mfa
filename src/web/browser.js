@@ -39,9 +39,7 @@ async function browserLogin(url, handler, gui = true) {
         const onRequest = async (request) => {
             if (isTopLevelNavigation(request)) {
                 const result = await handler.onRequest(page, request);
-                if (result) {
-                    return doResolve(result);
-                }
+                if (result) return doResolve(result);
             }
             request.continue();
         };
@@ -50,24 +48,20 @@ async function browserLogin(url, handler, gui = true) {
             const request = response.request();
             if (isTopLevelNavigation(request)) {
                 const result = await handler.onResponse(page, response);
-                if (result) {
-                    return doResolve(result);
-                }
+                if (result) return doResolve(result);
             }
         };
 
         const onPageLoaded = async () => {
             const result = await handler.onPageLoaded(page);
-            if (result) {
-                return doResolve(result);
-            }
+            if (result) return doResolve(result);
         };
 
         page.on('request', safeHandler(onRequest));
         page.on('response', safeHandler(onResponse));
         page.on('domcontentloaded', safeHandler(onPageLoaded));
 
-        await handler.onPageInit(page).catch(doReject);
+        handler.onPageInit(page).catch(doReject);
 
         page.goto(url).catch(doReject);
     });

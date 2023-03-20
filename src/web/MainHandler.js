@@ -15,20 +15,19 @@ class MainHandler extends WebHandler {
         this.awsHandler = awsHandler;
         this.idpHandlers = idpHandlers;
         this.idpHandler = null;
+        this.idpInitialized = false;
     }
 
     /**
-     * @param {ProviderHandler} handler
-     * @param {Page} page
      * @private
      */
-    async installIDPHandler(handler, page) {
+    async findHandler(predicate) {
+        const handler = await findAsync(this.idpHandlers, predicate);
         if (handler) {
             console.log(
                 'IDP: Identity Provider detected:',
                 handler.getProviderName()
             );
-            await handler.onPageInit(page);
             this.idpHandler = handler;
         }
     }
@@ -44,10 +43,7 @@ class MainHandler extends WebHandler {
 
         // Lazy init IDP handler
         if (!this.idpHandler) {
-            const handler = await findAsync(this.idpHandlers, (handler) =>
-                handler.checkRequest(page, request)
-            );
-            await this.installIDPHandler(handler, page);
+            await this.findHandler((h) => h.checkRequest(page, request));
         }
 
         // Propagate to IDP handler (if any)
@@ -67,10 +63,7 @@ class MainHandler extends WebHandler {
 
         // Lazy init IDP handler
         if (!this.idpHandler) {
-            const handler = await findAsync(this.idpHandlers, (handler) =>
-                handler.checkResponse(page, response)
-            );
-            await this.installIDPHandler(handler, page);
+            await this.findHandler((h) => h.checkResponse(page, response));
         }
 
         // Propagate to IDP handler (if any)
@@ -91,13 +84,17 @@ class MainHandler extends WebHandler {
      * @param {Page} page
      */
     async onPageLoaded(page) {
-        console.log('WEB: Page loaded:', await page.title());
+        console.log("WEB: Page loaded: '%s'", await page.title());
 
         // Propagate to AWS handler
         await this.awsHandler.onPageLoaded(page);
 
         // Propagate to IDP handler (if any)
         if (this.idpHandler) {
+            if (!this.idpInitialized) {
+                this.idpInitialized = true;
+                await this.idpHandler.onPageInit(page);
+            }
             await this.idpHandler.onPageLoaded(page);
         }
     }
