@@ -84,7 +84,10 @@ class MainHandler extends WebHandler {
      * @param {Page} page
      */
     async onPageLoaded(page) {
-        console.log("WEB: Page loaded: '%s'", await page.title());
+        console.log(
+            "WEB: Page loaded: '%s'",
+            await page.title().catch(() => '')
+        );
 
         // Propagate to AWS handler
         await this.awsHandler.onPageLoaded(page);
