@@ -1,6 +1,6 @@
 {
   "name": "aws-saml-session-mfa",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Create temporary AWS credentials using SAML-based identity provider. (supports MFA)",
   "author": "Jaroslaw Baczynski <jbaczynski@gmail.com>",
   "license": "MIT",
